@@ -14,7 +14,7 @@ public class FooBarCollector {
   @GeneratedValue
   Long id;
 
-  @OneToOne(mappedBy = "fooBarCollector", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(mappedBy = "fooBarCollector")
   Bar bar;
 
   public Long getId() {

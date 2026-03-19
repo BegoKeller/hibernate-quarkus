@@ -16,11 +16,11 @@ public class Bar {
   @Column(name = "ID", nullable = false, precision = 19, unique = true)
   Long id;
 
-  @OneToOne(mappedBy = "bar", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(mappedBy = "bar")
   Foo foo;
 
   @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "fooBarCollector", nullable = false, unique = true)
+  @JoinColumn(name = "fooBarCollector", unique = true)
   FooBarCollector fooBarCollector;
 
   @Column(name = "info")
