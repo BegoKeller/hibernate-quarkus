@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class FooBarCollectorEntityGraphTest {
@@ -26,47 +25,29 @@ class FooBarCollectorEntityGraphTest {
       emf.close();
     }
   }
-
   @Test
   void loadWithEntityGraphLeavesBarFooNullWhenNoFooExists() {
-    Long id = inTransaction(em -> {
+    try (EntityManager em = emf.createEntityManager()) {
+      var tx = em.getTransaction();
+      tx.begin();
       var fooBarCollector = new FooBarCollector();
       var bar = new Bar();
       bar.setId(1337L);
       bar.setInfo("test123");
       fooBarCollector.setBar(bar);
       em.persist(fooBarCollector);
-      return fooBarCollector.getId();
-    });
-
-    FooBarCollector loaded = inTransaction(em -> {
+      em.flush();
+      em.clear();
       var graph = em.createEntityGraph(FooBarCollector.class);
       graph.addAttributeNodes("bar");
-      return em.createQuery("select t from FooBarCollector t where t.id = :id", FooBarCollector.class)
-          .setParameter("id", id)
+      var loaded = em.createQuery("select t from FooBarCollector t where t.id = :id", FooBarCollector.class)
+          .setParameter("id", fooBarCollector.getId())
           .setHint(SpecHints.HINT_SPEC_FETCH_GRAPH, graph)
           .getSingleResult();
-    });
-
-    assertNotNull(loaded.getBar());
-    assertNull(loaded.getBar().getFoo());
-  }
-
-  private static <T> T inTransaction(java.util.function.Function<EntityManager, T> task) {
-    try (EntityManager em = emf.createEntityManager()) {
-      var tx = em.getTransaction();
-      try {
-        tx.begin();
-        T result = task.apply(em);
-        tx.commit();
-        return result;
-      } catch (RuntimeException e) {
-        if (tx.isActive()) {
-          tx.rollback();
-        }
-        throw e;
-      }
+      assertNull(loaded.getBar().getFoo());
+      tx.commit();
     }
+
   }
 }
 
